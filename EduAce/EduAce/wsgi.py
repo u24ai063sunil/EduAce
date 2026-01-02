@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'EduAce.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'EduAce.EduAce.settings')
 
 application = get_wsgi_application()
