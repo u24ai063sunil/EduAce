@@ -1,0 +1,428 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Expense Tracker-EduAce</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Poppins:wght@300;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: #0d0d0d;
+      color: white;
+      padding-top: 120px;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+
+    .stars, .stars2, .stars3 {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background-repeat: repeat;
+      z-index: -2;
+      animation: moveStars 100s linear infinite;
+    }
+
+    .stars {
+      background-image: url('https://raw.githubusercontent.com/VincentGarreau/particles.js/master/demo/media/star-bg.png');
+      opacity: 0.5;
+    }
+
+    .stars2 {
+      background-image: url('https://raw.githubusercontent.com/VincentGarreau/particles.js/master/demo/media/star-bg.png');
+      opacity: 0.3;
+    }
+
+    .stars3 {
+      background-image: url('https://raw.githubusercontent.com/VincentGarreau/particles.js/master/demo/media/star-bg.png');
+      opacity: 0.15;
+    }
+
+    @keyframes moveStars {
+      from { transform: translateY(0); }
+      to { transform: translateY(-1000px); }
+    }
+
+    .nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+      padding: 20px 30px;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: black;
+      backdrop-filter: blur(15px);
+      z-index: 100;
+      flex-wrap: wrap;
+    }
+
+    .nav-left, .nav-right {
+      display: flex;
+      gap: 40px;
+    }
+
+    .nav a {
+      text-decoration: none;
+      color: white;
+      font-weight: 600;
+      font-size: 18px;
+      transition: all 0.3s ease;
+    }
+
+    .nav a:hover {
+      color: #80ffdb;
+      text-shadow: 0 0 10px #80ffdb;
+      transform: scale(1.2);
+    }
+
+    .nav-title {
+      font-size: 50px;
+      font-weight: bold;
+      background: linear-gradient(45deg, #80ffdb, #7b2ff7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .expense-container {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(128, 255, 219, 0.3);
+      text-align: center;
+      width: 90%;
+      max-width: 450px;
+      margin: 2rem auto;
+      z-index: 1;
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5em;
+      color: #80ffdb;
+      margin-bottom: 15px;
+    }
+
+    p.description {
+      color: #cccccc;
+      font-size: 1rem;
+      margin-bottom: 20px;
+    }
+
+    .controls input,
+    .controls select {
+      padding: 10px;
+      font-size: 1.1em;
+      border-radius: 6px;
+      border: none;
+      margin-bottom: 10px;
+      width: 100%;
+      background: #1f1f1f;
+      color: white;
+    }
+
+    .controls button {
+      background: #80ffdb;
+      border: none;
+      padding: 15px 25px;
+      margin: 10px 0;
+      border-radius: 10px;
+      color: #0d0d0d;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s ease;
+      width: 100%;
+    }
+
+    .controls button:hover {
+      background: #7b2ff7;
+      color: white;
+    }
+
+    .expense-list {
+      margin-top: 20px;
+      color: #ccc;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      text-align: left;
+    }
+
+    .expense-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 1.1em;
+    }
+
+    .expense-item button {
+      margin-left: 10px;
+      background: #ff4d4d;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+
+    .expense-item button:hover {
+      background: #cc0000;
+    }
+
+    .total {
+      margin-top: 20px;
+      font-size: 1.4em;
+      font-weight: bold;
+    }
+    
+    .save-expenses {
+      background: #7b2ff7;
+      border: none;
+      padding: 15px 25px;
+      margin-top: 20px;
+      border-radius: 10px;
+      color: white;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s ease;
+      width: 100%;
+    }
+    
+    .save-expenses:hover {
+      background: #6a1fe6;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(123, 47, 247, 0.4);
+    }
+
+    .notification {
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      background: rgba(128, 255, 219, 0.9);
+      color: #0d0d0d;
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-weight: bold;
+      z-index: 1000;
+      transform: translateX(200%);
+      transition: transform 0.3s ease;
+    }
+    
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding: 2rem 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <!-- Star Background -->
+  <div class="stars"></div>
+  <div class="stars2"></div>
+  <div class="stars3"></div>
+  <canvas id="bg"></canvas>
+
+  <!-- Navbar -->
+  <div class="nav">
+    <div class="nav-left">
+      <a href="{% url "home" %}">Home</a>
+      <a href="{% url "features" %}">Features</a>
+      <a href="{% url "about" %}">About</a>
+    </div>
+    <div class="nav-title">EduAce</div>
+    <div class="nav-right">
+      <a href="{% url "signup" %}">Sign up</a>
+      <a href="{% url "login" %}">Login</a>
+      <a href="{% url "profile" %}">Profile</a>
+    </div>
+  </div>
+
+  <!-- Notification -->
+  <div class="notification" id="notification">Expenses saved successfully!</div>
+
+  <!-- Expense Tracker Card -->
+  <div class="expense-container">
+    <h1>Expense Tracker</h1>
+    <p class="description">Track your daily spending and manage your student budget effectively.</p>
+
+    <div class="controls">
+      <input type="text" id="expenseName" placeholder="Expense Name" />
+      <input type="number" id="expenseAmount" placeholder="Amount" />
+      <select id="expenseCategory">
+        <option value="Food">Food</option>
+        <option value="Transport">Transport</option>
+        <option value="Books">Books</option>
+        <option value="Entertainment">Entertainment</option>
+        <option value="Shopping">Shopping</option>
+        <option value="Utilities">Utilities</option>
+        <option value="Others">Others</option>
+      </select>
+      <button onclick="addExpense()">Add Expense</button>
+    </div>
+
+    <div class="expense-list" id="expenseList"></div>
+    <div class="total" id="total">Total: ₹0.00</div>
+    
+    {% if user.is_authenticated %}
+    <form id="saveExpensesForm" method="post" action="{% url 'save_expenses' %}">
+      {% csrf_token %}
+      <input type="hidden" id="expensesData" name="expenses_data" value="">
+      <button type="button" class="save-expenses" onclick="saveExpenses()">Save to Profile</button>
+    </form>
+    {% else %}
+    <p style="margin-top: 20px; color: #aaa;">Login to save your expenses to your profile</p>
+    {% endif %}
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-bottom">
+      <p>© 2025 EduAce. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Starfield Background Script -->
+  <script>
+    let scene, camera, renderer, stars;
+    function init() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("bg"), alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      const geometry = new THREE.BufferGeometry();
+      const starVertices = [];
+      for (let i = 0; i < 7000; i++) {
+        let x = (Math.random() - 0.5) * 2000;
+        let y = (Math.random() - 0.5) * 2000;
+        let z = (Math.random() - 0.5) * 2000;
+        starVertices.push(x, y, z);
+      }
+
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+      const material = new THREE.PointsMaterial({ color: 0xffffff });
+      stars = new THREE.Points(geometry, material);
+      scene.add(stars);
+      camera.position.z = 500;
+
+      animate();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      stars.rotation.x += 0.0003;
+      stars.rotation.y += 0.0003;
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener("resize", () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
+
+    init();
+  </script>
+
+  <!-- Expense Script -->
+  <script>
+    let expenses = [];
+    let totalAmount = 0;
+
+    function addExpense() {
+      const name = document.getElementById("expenseName").value;
+      const amount = parseFloat(document.getElementById("expenseAmount").value);
+      const category = document.getElementById("expenseCategory").value;
+
+      if (!name || isNaN(amount)) return;
+
+      const list = document.getElementById("expenseList");
+      const item = document.createElement("div");
+      item.className = "expense-item";
+      item.innerHTML = `
+        <span>${name} (${category}) - ₹${amount.toFixed(2)}</span>
+        <button onclick="removeExpense(this, ${amount})">X</button>
+      `;
+      list.appendChild(item);
+
+      // Store expense data
+      expenses.push({
+        name: name,
+        amount: amount,
+        category: category
+      });
+
+      totalAmount += amount;
+      document.getElementById("total").innerText = "Total: ₹" + totalAmount.toFixed(2);
+
+      document.getElementById("expenseName").value = "";
+      document.getElementById("expenseAmount").value = "";
+    }
+
+    function removeExpense(button, amount) {
+      const index = Array.from(button.parentElement.parentElement.children).indexOf(button.parentElement);
+      expenses.splice(index, 1);
+      
+      button.parentElement.remove();
+      totalAmount -= amount;
+      document.getElementById("total").innerText = "Total: ₹" + totalAmount.toFixed(2);
+    }
+    
+    function saveExpenses() {
+      if (expenses.length === 0) {
+        alert("Please add at least one expense to save");
+        return;
+      }
+      
+      // Set expense data to hidden input
+      document.getElementById("expensesData").value = JSON.stringify({
+        expenses: expenses,
+        total: totalAmount
+      });
+      
+      // Submit the form
+      document.getElementById("saveExpensesForm").submit();
+    }
+    
+    // Show notification if it exists
+    {% if messages %}
+      const notification = document.getElementById("notification");
+      notification.innerText = "{{ messages.0 }}";
+      notification.classList.add("show");
+      setTimeout(() => {
+        notification.classList.remove("show");
+      }, 3000);
+    {% endif %}
+  </script>
+</body>
+</html>

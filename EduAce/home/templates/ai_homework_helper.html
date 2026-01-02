@@ -1,0 +1,269 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Homework Helper-EduAce</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: #0d0d0d;
+      color: white;
+      padding-top: 120px;
+    }
+
+    .stars, .stars2, .stars3 {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background-repeat: repeat;
+      z-index: -2;
+      animation: moveStars 100s linear infinite;
+    }
+
+    .stars { background-image: url('https://raw.githubusercontent.com/VincentGarreau/particles.js/master/demo/media/star-bg.png'); opacity: 0.5; }
+    .stars2 { background-image: url('https://raw.githubusercontent.com/VincentGarreau/particles.js/master/demo/media/star-bg.png'); opacity: 0.3; }
+    .stars3 { background-image: url('https://raw.githubusercontent.com/VincentGarreau/particles.js/master/demo/media/star-bg.png'); opacity: 0.15; }
+
+    @keyframes moveStars {
+      from { transform: translateY(0); }
+      to { transform: translateY(-1000px); }
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -3;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+      padding: 20px 30px;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: black;
+      backdrop-filter: blur(15px);
+      z-index: 100;
+      flex-wrap: wrap;
+    }
+
+    .nav-left, .nav-right {
+      display: flex;
+      gap: 40px;
+    }
+
+    .nav a {
+      text-decoration: none;
+      color: white;
+      font-weight: 600;
+      font-size: 18px;
+      transition: all 0.3s ease;
+    }
+
+    .nav a:hover {
+      color: #80ffdb;
+      text-shadow: 0 0 10px #80ffdb;
+      transform: scale(1.2);
+    }
+
+    .nav-title {
+      font-size: 50px;
+      font-weight: bold;
+      background: linear-gradient(45deg, #80ffdb, #7b2ff7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(128, 255, 219, 0.1);
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      color: #80ffdb;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    p.description {
+      text-align: center;
+      color: #ccc;
+      margin-bottom: 2rem;
+    }
+
+    .input-area {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      border-radius: 10px;
+      padding: 1rem;
+      font-size: 1rem;
+      background-color: #1e1e1e;
+      color: white;
+      border: 1px solid #333;
+      resize: vertical;
+    }
+
+    button {
+      background: #00ffea;
+      border: none;
+      color: black;
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      align-self: flex-start;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #7b2ff7;
+      color: white;
+    }
+
+    .response {
+      margin-top: 2rem;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 1.5rem;
+      border-radius: 10px;
+      color: #e0e0e0;
+      font-size: 1rem;
+      min-height: 100px;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding: 1rem 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.85rem;
+      color: #aaa;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Background -->
+  <div class="stars"></div>
+  <div class="stars2"></div>
+  <div class="stars3"></div>
+  <canvas id="bg"></canvas>
+
+  <!-- Navbar -->
+  <div class="nav">
+    <div class="nav-left">
+      <a href="{% url "home" %}">Home</a>
+      <a href="{% url "features" %}">Features</a>
+      <a href="{% url "about" %}">About</a>
+    </div>
+    <div class="nav-title">EduAce</div>
+    <div class="nav-right">
+      <a href="{% url "signup" %}">Sign up</a>
+      <a href="{% url "login" %}">Login</a>
+      <a href="{% url "profile" %}">Profile</a>
+    </div>
+  </div>
+
+  <!-- Main Section -->
+  <div class="container">
+    <h1>AI Homework Helper</h1>
+    <p class="description">Ask a question or paste your problem to get instant answers and solutions using AI.</p>
+    <form method="POST" class="input-area">
+      {% csrf_token %}
+      <textarea name="question" placeholder="e.g. Solve x^2 + 5x + 6 = 0 or Explain Newton's Second Law..." required>{{ request.POST.question }}</textarea>
+      
+      <div style="margin-top: 10px; display: flex; gap: 10px;">
+        <button type="submit" name="action" value="get_solution" style="background-color: #00ffea;">Get Solution</button>
+        <button type="submit" name="action" value="clear_chat" style="background-color: #ff4d4d;">Clear Chat</button>
+      </div>
+    </form>
+    <div class="response">
+      {% for message in chat_history %}
+        <div style="margin-bottom: 10px; padding: 8px; border-radius: 5px; background: {% if message.role == 'user' %}rgba(0, 255, 234, 0.1){% else %}rgba(123, 47, 247, 0.1){% endif %};">
+          <strong>{% if message.role == 'user' %}You:{% else %}AI:{% endif %}</strong>
+          {{ message.content|linebreaksbr }}
+        </div>
+      {% empty %}
+        ✨ Your AI-generated solution will appear here.
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-bottom">
+      <p>© 2025 EduAce. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Starfield Background -->
+  <script>
+    let scene, camera, renderer, stars;
+    function init() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("bg"), alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      const geometry = new THREE.BufferGeometry();
+      const starVertices = [];
+      for (let i = 0; i < 7000; i++) {
+        let x = (Math.random() - 0.5) * 2000;
+        let y = (Math.random() - 0.5) * 2000;
+        let z = (Math.random() - 0.5) * 2000;
+        starVertices.push(x, y, z);
+      }
+
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+      const material = new THREE.PointsMaterial({ color: 0xffffff });
+      stars = new THREE.Points(geometry, material);
+      scene.add(stars);
+      camera.position.z = 500;
+
+      animate();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      stars.rotation.x += 0.0003;
+      stars.rotation.y += 0.0003;
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener("resize", () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
+
+    init();
+  </script>
+</body>
+</html>
