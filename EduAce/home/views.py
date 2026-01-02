@@ -105,7 +105,7 @@ def signup(request):
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
 
-            # Create ACTIVE user directly
+            # Create user
             user = User.objects.create_user(
                 username=email,
                 email=email,
@@ -115,13 +115,15 @@ def signup(request):
             user.is_active = True
             user.save()
 
-            # Update profile
-            user.profile.college = form.cleaned_data['college']
-            user.profile.degree = form.cleaned_data['degree']
-            user.profile.year = form.cleaned_data['year']
-            user.profile.subjects = form.cleaned_data['subjects']
-            user.profile.contact = form.cleaned_data['contact']
-            user.profile.save()
+            # ✅ CREATE PROFILE EXPLICITLY
+            Profile.objects.create(
+                user=user,
+                college=form.cleaned_data['college'],
+                degree=form.cleaned_data['degree'],
+                year=form.cleaned_data['year'],
+                subjects=form.cleaned_data['subjects'],
+                contact=form.cleaned_data['contact']
+            )
 
             messages.success(request, "Account created successfully. You can now log in.")
             return redirect('login')
@@ -129,6 +131,7 @@ def signup(request):
         form = UserRegistrationForm()
 
     return render(request, 'signup.html', {'form': form})
+
 
 def login_view(request):
     if request.method == 'POST':
