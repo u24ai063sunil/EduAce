@@ -8,16 +8,6 @@ import requests
 
 from .forms import ContactForm, UserRegistrationForm, LoginForm,StudyPlanForm
 from .models import Profile,StudyPlan
-# email veri
-from django.contrib.sites.shortcuts import get_current_site
-from django.template.loader import render_to_string
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from django.core.mail import EmailMessage
-
-from .tokens import account_activation_token
-
-
 #API
 import requests
 from django.conf import settings
@@ -107,61 +97,25 @@ def focustimer(request):
 def expensetracker(request):
     return render(request, 'expensetracker.html')
 
-# def signup(request):
-#     if request.method == 'POST':
-#         form = UserRegistrationForm(request.POST)
-#         if form.is_valid():
-#             # Get cleaned form data
-#             full_name = form.cleaned_data['full_name']
-#             email = form.cleaned_data['email']
-#             password = form.cleaned_data['password']
-            
-#             # Create user - this will trigger the signal to create a profile
-#             user = User.objects.create_user(
-#                 username=email, 
-#                 email=email, 
-#                 password=password,
-#                 first_name=full_name
-#             )
-            
-#             # After user is created and signal has run, update the profile
-#             # It's important to refresh the user from DB to ensure profile relation is loaded
-#             user = User.objects.get(pk=user.pk)
-            
-#             # Access and update profile fields
-#             user.profile.college = form.cleaned_data['college']
-#             user.profile.degree = form.cleaned_data['degree']
-#             user.profile.year = form.cleaned_data['year']
-#             user.profile.subjects = form.cleaned_data['subjects']
-#             user.profile.contact = form.cleaned_data['contact']
-#             user.profile.save()
-            
-#             messages.success(request, "Account created successfully. Please log in.")
-#             return redirect('login')
-#     else:
-#         form = UserRegistrationForm()
-    
-#     return render(request, 'signup.html', {'form': form})
 def signup(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
-            # Get cleaned form data
             full_name = form.cleaned_data['full_name']
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
 
-            # Create user but keep inactive until email verification
+            # Create ACTIVE user directly
             user = User.objects.create_user(
                 username=email,
                 email=email,
                 password=password,
                 first_name=full_name
             )
-            user.is_active = False
+            user.is_active = True
             user.save()
 
-            # Update profile with additional info
+            # Update profile
             user.profile.college = form.cleaned_data['college']
             user.profile.degree = form.cleaned_data['degree']
             user.profile.year = form.cleaned_data['year']
@@ -169,39 +123,12 @@ def signup(request):
             user.profile.contact = form.cleaned_data['contact']
             user.profile.save()
 
-            # Send activation email
-            current_site = get_current_site(request)
-            subject = "Activate your EduAce account"
-            message = render_to_string('activation_email.html', {
-                'user': user,
-                'domain': current_site.domain,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'token': account_activation_token.make_token(user),
-                'protocol': 'https' if request.is_secure() else 'http',
-            })
-            email_message = EmailMessage(subject, message, to=[email])
-            email_message.send()
-
-            messages.success(request, "Account created! Please check your email to activate your account.")
-            return redirect('signup')
+            messages.success(request, "Account created successfully. You can now log in.")
+            return redirect('login')
     else:
         form = UserRegistrationForm()
 
     return render(request, 'signup.html', {'form': form})
-def activate(request, uidb64, token):
-    try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = User.objects.get(pk=uid)
-    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-        user = None
-
-    if user and account_activation_token.check_token(user, token):
-        user.is_active = True
-        user.save()
-        login(request, user)
-        return render(request, 'activation_success.html', {'user': user})
-    else:
-        return render(request, 'activation_invalid.html')
 
 def login_view(request):
     if request.method == 'POST':
