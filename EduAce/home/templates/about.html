@@ -5,11 +5,155 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>About-EduAce</title>
+
   <link rel="stylesheet" href="{% static 'css/style.css' %}" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Poppins:wght@300;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <style>
+    /* ================= RESET ================= */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      padding-top: 110px; /* space for fixed navbar */
+    }
+
+    /* ================= NAVBAR ================= */
+    .nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(16px);
+      z-index: 1000;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      justify-content: center;
+    }
+
+    .nav-inner {
+      width: 100%;
+      max-width: 1200px;
+      padding: 18px 24px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+    }
+
+    .nav-left,
+    .nav-right {
+      display: flex;
+      align-items: center;
+      justify-content: space-evenly;
+      gap: 40px;
+    }
+
+    .nav-right {
+      justify-content: flex-end;
+    }
+
+    .nav-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 42px;
+      font-weight: 800;
+      background: linear-gradient(90deg, #80ffdb, #7b2ff7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* ================= NAV LINKS ================= */
+    .nav a {
+      position: relative;
+      text-decoration: none;
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      padding-bottom: 4px;
+    }
+
+    /* REMOVE ALL OLD HOVER EFFECTS */
+    .nav a:hover {
+      color: white;
+      text-shadow: none;
+      transform: none;
+    }
+
+    /* UNDERLINE ONLY */
+    .nav a::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -3px;
+      width: 0%;
+      height: 2px;
+      background: linear-gradient(90deg, #80ffdb, #7b2ff7);
+      transition: width 0.25s ease;
+    }
+
+    .nav a:hover::after {
+      width: 100%;
+    }
+
+    /* ================= PROFILE DROPDOWN ================= */
+    .profile-menu {
+      position: relative;
+    }
+
+    .avatar-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00ffea, #7b2ff7);
+      color: black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .dropdown {
+      position: absolute;
+      right: 0;
+      top: 56px;
+      background: rgba(12,12,12,0.96);
+      border-radius: 14px;
+      min-width: 200px;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-8px);
+      pointer-events: none;
+      transition: all 0.25s ease;
+    }
+
+    .dropdown.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .dropdown-header {
+      padding: 14px 18px;
+      font-weight: 700;
+      color: #80ffdb;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .dropdown a {
+      display: block;
+      padding: 14px 18px;
+      color: white;
+      text-decoration: none;
+    }
+
+    .dropdown a:hover {
+      background: rgba(255,255,255,0.06);
+    }
     * {
       margin: 0;
       padding: 0;
@@ -199,154 +343,161 @@
 
 <body>
 
-  <canvas id="bg"></canvas>
+<canvas id="bg"></canvas>
 
-  <div class="nav">
+<!-- ================= NAVBAR ================= -->
+<div class="nav">
+  <div class="nav-inner">
+
     <div class="nav-left">
       <a href="{% url 'home' %}">Home</a>
       <a href="{% url 'features' %}">Features</a>
       <a href="{% url 'about' %}">About</a>
     </div>
+
     <div class="nav-title">EduAce</div>
+
     <div class="nav-right">
-      <a href="{% url 'signup' %}">Sign up</a>
-      <a href="{% url 'login' %}">Login</a>
-      <a href="{% url "profile" %}">Profile</a>
+      <a href="{% url 'studyplanner' %}">Study Planner</a>
+      <a href="{% url 'ai_homework_helper' %}">AI Helper</a>
+
+      {% if user.is_authenticated %}
+        <div class="profile-menu">
+          <div class="avatar-circle" id="avatarBtn">
+            {{ user.first_name|slice:":1"|upper }}
+          </div>
+
+          <div class="dropdown" id="dropdownMenu">
+            <div class="dropdown-header">
+              {{ user.first_name|default:user.username }}
+            </div>
+            <a href="{% url 'profile' %}">My Profile</a>
+            <a href="{% url 'logout' %}">Logout</a>
+          </div>
+        </div>
+      {% else %}
+        <a href="{% url 'login' %}">Login</a>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= PAGE CONTENT (UNCHANGED) ================= -->
+
+<section class="about-section">
+  <h2>About EDUACE</h2>
+  <p>
+    EDUACE is your intelligent academic assistant designed to personalize your learning journey.
+    Whether you're preparing for exams, tackling tough homework, or exploring new topics,
+    we're here to make studying easier, smarter, and more engaging.
+  </p>
+  <p>
+    Built with cutting-edge tools and a student-first mindset, our mission is to bring clarity,
+    motivation, and simplicity to every learner's path.
+  </p>
+</section>
+
+<section class="vision">
+  <h2>Our Vision</h2>
+  <p>
+    We believe that quality education should be accessible, engaging, and tailored to every learner’s unique needs.
+  </p>
+</section>
+
+<section class="team">
+  <h2 style="text-align: center;">Meet the Team</h2>
+  <div class="team-grid">
+    <div class="member">
+      <h4>Sunil Jaat</h4>
+      <p>Team Member</p>
+      <a href="https://instagram.com/sunilj2911" target="_blank">Follow on Instagram</a>
+    </div>
+    <div class="member">
+      <h4>Karan Bheda</h4>
+      <p>Team Member</p>
+      <a href="https://instagram.com/_karanbheda" target="_blank">Follow on Instagram</a>
+    </div>
+    <div class="member">
+      <h4>Vansh Rawat</h4>
+      <p>Team Member</p>
+      <a href="https://instagram.com/vanshrawat9883" target="_blank">Follow on Instagram</a>
+    </div>
+    <div class="member">
+      <h4>Aarti Jangid</h4>
+      <p>Team Member</p>
+      <a href="#" target="_blank">Follow on Instagram</a>
     </div>
   </div>
+</section>
 
-  <section class="about-section">
-    <h2>About EDUACE</h2>
-    <p>
-      EDUACE is your intelligent academic assistant designed to personalize your learning journey. Whether you're preparing for exams, tackling tough homework, or exploring new topics, we're here to make studying easier, smarter, and more engaging.
-    </p>
-    <p>
-      Built with cutting-edge tools and a student-first mindset, our mission is to bring clarity, motivation, and simplicity to every learner's path.
-    </p>
+<section class="cta">
+  <h3>Ready to Supercharge Your Studies?</h3>
+  <p>Join thousands of learners already leveling up with Study Buddy.</p>
+  <a href="{% url 'signup' %}">Get Started</a>
+</section>
 
-    <div class="features">
-      <div class="feature-box">
-        <div class="feature-head">
-          <h3>Smart Q&A</h3>
-        </div>
-        <div class="feature-content">
-          <p>Instantly get answers and explanations for your academic questions.</p>
-        </div>
-      </div>
-      <div class="feature-box">
-        <div class="feature-head">
-          <h3>Study Planner</h3>
-        </div>
-        <div class="feature-content">
-          <p>Set study goals, Daily time table, and stay focused with your own space.</p>
-        </div>
-      </div>
-      <div class="feature-box">
-        <div class="feature-head">
-          <h3>Study Resources</h3>
-        </div>
-        <div class="feature-content">
-          <p>Get access to curated materials from top institutions, Youtube videos, right at your fingertips.</p>
-        </div>
-      </div>
-      <div class="feature-box">
-        <div class="feature-head">
-          <h3>Support</h3>
-        </div>
-        <div class="feature-content">
-          <p>Connect with us and collaborate on your academic growth.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+<footer>
+  <div class="footer-bottom">
+    <p>© 2025 EduAce. All Rights Reserved.</p>
+  </div>
+</footer>
 
-  <section class="vision">
-    <h2>Our Vision</h2>
-    <p>
-      We believe that quality education should be accessible, engaging, and tailored to every learner’s unique needs. Study Buddy is more than a tool — it’s a community built to empower students with confidence, curiosity, and clarity. We envision a world where technology bridges the gap between potential and performance.
-    </p>
-  </section>
+<!-- ================= DROPDOWN + BG SCRIPT ================= -->
+<script>
+  const avatarBtn = document.getElementById("avatarBtn");
+  const dropdown = document.getElementById("dropdownMenu");
 
-  <section class="team">
-    <h2 style="text-align: center;">Meet the Team</h2>
-    <div class="team-grid">
-      <div class="member">
-        <h4>Sunil Jaat</h4>
-        <p>Team Member</p>
-        <a href="https://instagram.com/sunilj2911" target="_blank">Follow on Instagram</a>
-      </div>
-      <div class="member">
-        <h4>Karan Bheda</h4>
-        <p>Team Member</p>
-        <a href="https://instagram.com/_karanbheda" target="_blank">Follow on Instagram</a>
-      </div>
-      <div class="member">
-        <h4>Vansh Rawat</h4>
-        <p>Team Member</p>
-        <a href="https://instagram.com/vanshrawat9883" target="_blank">Follow on Instagram</a>
-      </div>
-      <div class="member">
-        <h4>Aarti Jangid</h4>
-        <p>Team Member</p>
-        <a href="#" target="_blank">Follow on Instagram</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="cta">
-    <h3>Ready to Supercharge Your Studies?</h3>
-    <p>Join thousands of learners already leveling up with Study Buddy.</p>
-    <a href="{% url "signup" %}">Get Started</a>
-  </section>
-
-  <footer>
-    <div class="footer-bottom">
-      <p>© 2025 EduAce. All Rights Reserved.</p>
-    </div>
-  </footer>
-
-  <script>
-    let scene, camera, renderer, stars;
-    function init() {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("bg"), alpha: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-
-      const geometry = new THREE.BufferGeometry();
-      const starVertices = [];
-      for (let i = 0; i < 7000; i++) {
-        let x = (Math.random() - 0.5) * 2000;
-        let y = (Math.random() - 0.5) * 2000;
-        let z = (Math.random() - 0.5) * 2000;
-        starVertices.push(x, y, z);
-      }
-
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-      const material = new THREE.PointsMaterial({ color: 0xffffff });
-      stars = new THREE.Points(geometry, material);
-      scene.add(stars);
-      camera.position.z = 500;
-
-      animate();
-    }
-
-    function animate() {
-      requestAnimationFrame(animate);
-      stars.rotation.x += 0.0003;
-      stars.rotation.y += 0.0003;
-      renderer.render(scene, camera);
-    }
-
-    window.addEventListener("resize", () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
+  if (avatarBtn && dropdown) {
+    avatarBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle("show");
     });
 
-    init();
-  </script>
+    document.addEventListener("click", () => {
+      dropdown.classList.remove("show");
+    });
+  }
+
+  let scene, camera, renderer, stars;
+  function init() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("bg"), alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const geometry = new THREE.BufferGeometry();
+    const starVertices = [];
+    for (let i = 0; i < 7000; i++) {
+      starVertices.push(
+        (Math.random() - 0.5) * 2000,
+        (Math.random() - 0.5) * 2000,
+        (Math.random() - 0.5) * 2000
+      );
+    }
+
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(starVertices, 3));
+    stars = new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0xffffff }));
+    scene.add(stars);
+    camera.position.z = 500;
+    animate();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    stars.rotation.x += 0.0003;
+    stars.rotation.y += 0.0003;
+    renderer.render(scene, camera);
+  }
+
+  window.addEventListener("resize", () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+
+  init();
+</script>
 
 </body>
 </html>
-

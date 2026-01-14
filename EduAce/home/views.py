@@ -83,9 +83,6 @@ def features(request):
 
 def resources(request):
     return render(request, 'resources.html')
-      
-def study_planner(request):
-    return render(request, 'studyplanner.html')
 
 @login_required
 def calender(request):
@@ -101,31 +98,23 @@ def signup(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
-            full_name = form.cleaned_data['full_name']
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
-
-            # Create user
             user = User.objects.create_user(
-                username=email,
-                email=email,
-                password=password,
-                first_name=full_name
-            )
-            user.is_active = True
-            user.save()
-
-            # ✅ CREATE PROFILE EXPLICITLY
-            Profile.objects.create(
-                user=user,
-                college=form.cleaned_data['college'],
-                degree=form.cleaned_data['degree'],
-                year=form.cleaned_data['year'],
-                subjects=form.cleaned_data['subjects'],
-                contact=form.cleaned_data['contact']
+                username=form.cleaned_data['email'],
+                email=form.cleaned_data['email'],
+                password=form.cleaned_data['password'],
+                first_name=form.cleaned_data['full_name']
             )
 
-            messages.success(request, "Account created successfully. You can now log in.")
+            # Update profile AFTER signal created it
+            profile, _ = Profile.objects.get_or_create(user=user)
+            profile.college = form.cleaned_data['college']
+            profile.degree = form.cleaned_data['degree']
+            profile.year = form.cleaned_data['year']
+            profile.subjects = form.cleaned_data['subjects']
+            profile.contact = form.cleaned_data['contact']
+            profile.save()
+
+            messages.success(request, "Account created successfully. Please log in.")
             return redirect('login')
     else:
         form = UserRegistrationForm()

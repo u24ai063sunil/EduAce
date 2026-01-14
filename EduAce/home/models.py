@@ -1,17 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# Profile model for storing additional user information
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    college = models.CharField(max_length=100, blank=True)
-    degree = models.CharField(max_length=100, blank=True)
-    year = models.CharField(max_length=20, blank=True)
-    subjects = models.CharField(max_length=255, blank=True)
-    contact = models.CharField(max_length=15, blank=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    college = models.CharField(max_length=200)
+    degree = models.CharField(max_length=100)
+    year = models.CharField(max_length=20)
+    subjects = models.TextField()
+    contact = models.CharField(max_length=15)
 
     def __str__(self):
-        return self.user.username
+        return self.user.email
 
 class ContactMessage(models.Model):
     name = models.CharField(max_length=100)
