@@ -94,33 +94,80 @@ def focustimer(request):
 def expensetracker(request):
     return render(request, 'expensetracker.html')
 
+# views.py
+import random
+from .utils import send_otp_email
+
 def signup(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
+
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            full_name = form.cleaned_data['full_name']
+
+            # 1️⃣ Create user (inactive until email verified)
             user = User.objects.create_user(
-                username=form.cleaned_data['email'],
-                email=form.cleaned_data['email'],
-                password=form.cleaned_data['password'],
-                first_name=form.cleaned_data['full_name']
+                username=email,
+                email=email,
+                password=password,
+                first_name=full_name,
+                is_active=False
             )
 
-            # Update profile AFTER signal created it
+            # 2️⃣ Create / update profile
             profile, _ = Profile.objects.get_or_create(user=user)
             profile.college = form.cleaned_data['college']
             profile.degree = form.cleaned_data['degree']
             profile.year = form.cleaned_data['year']
             profile.subjects = form.cleaned_data['subjects']
             profile.contact = form.cleaned_data['contact']
+
+            # 3️⃣ Generate OTP
+            otp = str(random.randint(100000, 999999))
+            profile.email_otp = otp
+            profile.is_email_verified = False
             profile.save()
 
-            messages.success(request, "Account created successfully. Please log in.")
-            return redirect('login')
+            # 4️⃣ Send OTP email
+            send_otp_email(email, otp)
+
+            # 5️⃣ Store user id in session for verification
+            request.session['verify_user_id'] = user.id
+
+            messages.success(
+                request,
+                "Account created! A 6-digit verification code has been sent to your email."
+            )
+
+            return redirect('verify_email')
+
     else:
         form = UserRegistrationForm()
 
     return render(request, 'signup.html', {'form': form})
 
+def verify_email(request):
+    user_id = request.session.get('verify_user_id')
+    user = User.objects.get(id=user_id)
+
+    if request.method == 'POST':
+        otp = request.POST.get('otp')
+
+        if otp == user.profile.email_otp:
+            user.is_active = True
+            user.save()
+            user.profile.is_email_verified = True
+            user.profile.email_otp = ""
+            user.profile.save()
+
+            messages.success(request, "Email verified successfully!")
+            return redirect('login')
+        else:
+            messages.error(request, "Invalid verification code")
+
+    return render(request, 'verify_email.html')
 
 def login_view(request):
     if request.method == 'POST':
@@ -131,6 +178,9 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
 
             if user is not None:
+                if not user.profile.is_email_verified:
+                    messages.error(request, "Please verify your email first.")
+                    return redirect('login')
                 login(request, user)
                 return redirect('features')  # Redirect after login
             else:

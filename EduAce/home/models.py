@@ -9,6 +9,9 @@ class Profile(models.Model):
     subjects = models.TextField()
     contact = models.CharField(max_length=15)
 
+    is_email_verified = models.BooleanField(default=False)
+    email_otp = models.CharField(max_length=6, blank=True, null=True)
+    
     def __str__(self):
         return self.user.email
 
