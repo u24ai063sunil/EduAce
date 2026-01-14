@@ -5,6 +5,11 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import ContactMessage, Profile
 
+class ProfileEditForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['college', 'degree', 'year', 'subjects', 'contact']
+
 # For contact form
 class ContactForm(forms.ModelForm):
     class Meta:

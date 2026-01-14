@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 import requests
 
-from .forms import ContactForm, UserRegistrationForm, LoginForm,StudyPlanForm
+from .forms import ContactForm, UserRegistrationForm, LoginForm,StudyPlanForm,ProfileEditForm
 from .models import Profile,StudyPlan
 #API
 import requests
@@ -219,6 +219,22 @@ def profile(request):
     }
     return render(request, 'profile.html', context)
 
+@login_required
+def edit_profile(request):
+    profile = request.user.profile
+
+    if request.method == 'POST':
+        form = ProfileEditForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profile updated successfully")
+            return redirect('profile')
+    else:
+        form = ProfileEditForm(instance=profile)
+
+    return render(request, 'edit_profile.html', {'form': form})
+
+
 def logout_view(request):
     logout(request)
     messages.success(request, "You have been successfully logged out.")
@@ -342,3 +358,41 @@ def study_planner(request):
         'form': form,
         'saved_plans': saved_plans
     })
+def forgot_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        user = User.objects.filter(email=email).first()
+
+        if user:
+            otp = str(random.randint(100000, 999999))
+            user.profile.email_otp = otp
+            user.profile.save()
+
+            send_otp_email(email, otp, purpose="Password Reset")
+            request.session['reset_user_id'] = user.id
+            return redirect('reset_password')
+
+        messages.error(request, "Email not found")
+
+    return render(request, 'forgot_password.html')
+
+def reset_password(request):
+    user_id = request.session.get('reset_user_id')
+    user = User.objects.get(id=user_id)
+
+    if request.method == 'POST':
+        otp = request.POST.get('otp')
+        new_password = request.POST.get('password')
+
+        if otp == user.profile.email_otp:
+            user.set_password(new_password)
+            user.save()
+            user.profile.email_otp = ""
+            user.profile.save()
+
+            messages.success(request, "Password reset successfully!")
+            return redirect('login')
+        else:
+            messages.error(request, "Invalid OTP")
+
+    return render(request, 'reset_password.html')
