@@ -303,6 +303,7 @@ LOGIN_URL = '/login/'
 
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_SAVE_EVERY_REQUEST = True
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
 
 
 # =====================
