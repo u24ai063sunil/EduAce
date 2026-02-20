@@ -22,11 +22,25 @@ logger = logging.getLogger(__name__)
 
 
 def send_otp_email(email, otp, purpose="Verification"):
-    """Send OTP via Resend API if available, otherwise fall back to SMTP.
+    """Send OTP via SMTP (Django/Gmail) first, then fall back to Resend API.
 
     Returns True on success, False on failure.
     """
-    # Try Resend API when API key is configured
+    # Try Django SMTP first (Gmail SMTP is reliable and works for any recipient domain)
+    email_host_user = getattr(settings, "EMAIL_HOST_USER", None)
+    email_host_password = getattr(settings, "EMAIL_HOST_PASSWORD", None)
+    if email_host_user and email_host_password:
+        subject = f"EduAce {purpose} Code"
+        message = f"Your 6-digit verification code is: {otp}"
+        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", email_host_user)
+        try:
+            send_mail(subject, message, from_email, [email], fail_silently=False)
+            return True
+        except Exception as e:
+            logger.exception("Exception while sending email via SMTP to %s", email)
+            print("SMTP exception:", e)
+
+    # Fallback to Resend API (only if SMTP fails or is not configured)
     api_key = getattr(settings, "RESEND_API_KEY", None)
     if api_key:
         url = "https://api.resend.com/emails"
@@ -57,20 +71,6 @@ def send_otp_email(email, otp, purpose="Verification"):
         except Exception as e:
             logger.exception("Exception while sending email via Resend to %s", email)
             print("Resend exception:", e)
-
-    # Fallback to Django SMTP
-    email_host_user = getattr(settings, "EMAIL_HOST_USER", None)
-    email_host_password = getattr(settings, "EMAIL_HOST_PASSWORD", None)
-    if email_host_user and email_host_password:
-        subject = f"EduAce {purpose} Code"
-        message = f"Your 6-digit verification code is: {otp}"
-        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", email_host_user)
-        try:
-            send_mail(subject, message, from_email, [email], fail_silently=False)
-            return True
-        except Exception as e:
-            logger.exception("Exception while sending email via SMTP to %s", email)
-            print("SMTP exception:", e)
 
     logger.error("No email backend available or sending failed for %s", email)
     return False
