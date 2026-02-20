@@ -162,7 +162,27 @@
 from pathlib import Path
 import os
 
+# Load .env file into environment for local development (no extra deps)
 BASE_DIR = Path(__file__).resolve().parent.parent
+env_path = BASE_DIR / '.env'
+if env_path.exists():
+    try:
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                if '=' not in line:
+                    continue
+                key, val = line.split('=', 1)
+                key = key.strip()
+                val = val.strip().strip('"').strip("'")
+                # don't overwrite existing environment variables
+                if key not in os.environ:
+                    os.environ[key] = val
+    except Exception:
+        # If loading fails, continue — settings will pick from real env
+        pass
 
 
 # =====================

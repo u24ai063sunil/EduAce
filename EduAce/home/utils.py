@@ -36,8 +36,9 @@ def send_otp_email(email, otp, purpose="Verification"):
             "Content-Type": "application/json",
         }
 
+        from_address = getattr(settings, "DEFAULT_FROM_EMAIL", "EduAce <onboarding@resend.dev>")
         data = {
-            "from": "EduAce <onboarding@resend.dev>",
+            "from": from_address,
             "to": [email],
             "subject": f"EduAce {purpose} Code",
             "html": f"""
@@ -52,8 +53,10 @@ def send_otp_email(email, otp, purpose="Verification"):
             if resp.status_code in (200, 201, 202):
                 return True
             logger.error("Resend API error sending email to %s: %s %s", email, resp.status_code, resp.text)
-        except Exception:
+            print(f"Resend API error: status={resp.status_code} text={resp.text}")
+        except Exception as e:
             logger.exception("Exception while sending email via Resend to %s", email)
+            print("Resend exception:", e)
 
     # Fallback to Django SMTP
     email_host_user = getattr(settings, "EMAIL_HOST_USER", None)
@@ -65,8 +68,9 @@ def send_otp_email(email, otp, purpose="Verification"):
         try:
             send_mail(subject, message, from_email, [email], fail_silently=False)
             return True
-        except Exception:
+        except Exception as e:
             logger.exception("Exception while sending email via SMTP to %s", email)
+            print("SMTP exception:", e)
 
     logger.error("No email backend available or sending failed for %s", email)
     return False
