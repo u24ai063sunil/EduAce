@@ -1,42 +1,58 @@
-{% extends "socialaccount/base_entrance.html" %}
-{% load i18n %}
-{% load allauth %}
-{% block head_title %}
-    {% trans "Sign In" %}
-{% endblock head_title %}
-{% block content %}
-    {% if process == "connect" %}
-        {% element h1 %}
-            {% blocktrans with provider.name as provider %}Connect {{ provider }}{% endblocktrans %}
-        {% endelement %}
-        {% element p %}
-            {% blocktrans with provider.name as provider %}You are about to connect a new third-party account from {{ provider }}.{% endblocktrans %}
-        {% endelement %}
-    {% else %}
-        {% element h1 %}
-            {% blocktrans with provider.name as provider %}Sign In Via {{ provider }}{% endblocktrans %}
-        {% endelement %}
-        {% element p %}
-            {% blocktrans with provider.name as provider %}You are about to sign in using a third-party account from {{ provider }}.{% endblocktrans %}
-        {% endelement %}
-    {% endif %}
-    {% element form method="post" no_visible_fields=True %}
-        {% slot actions %}
-            {% csrf_token %}
-            {% element button type="submit" %}
-                {% trans "Continue" %}
+{% load i18n allauth %}
+{% blocktrans with provider.name as provider %}
+        {% comment %}Unified provider confirmation UI: always show 'Continue with <Provider>'{% endcomment %}
+{% endblocktrans %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Continue with {{ provider }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Poppins:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        html,body{height:100%;margin:0;font-family:'Poppins',sans-serif;background:#0d0d0d;color:#fff}
+        .center-wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:40px}
+        .card{background:rgba(0,0,0,0.75);border-radius:12px;padding:28px 32px;max-width:640px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03)}
+        .brand{font-family:'Orbitron',sans-serif;color:#80ffdb;font-size:28px;margin-bottom:6px}
+        h1{margin:8px 0 6px;font-size:28px;color:#00ffea}
+        p.lead{color:#d1d1d1;margin-bottom:20px}
+        .actions{display:flex;gap:12px;align-items:center}
+        .btn{background:#00ffea;color:#000;padding:10px 16px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+        .btn.secondary{background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.08)}
+        .muted{color:#999;font-size:0.9rem}
+        .note{margin-top:12px;color:#888;font-size:0.85rem}
+    </style>
+</head>
+<body>
+    <div class="center-wrap">
+        <div class="card">
+            <div class="brand">EduAce</div>
+            <h1>Continue with {{ provider }}</h1>
+            <p class="lead">You will be signed in using your {{ provider }} account. This single flow handles both sign in and account connection.</p>
+
+            {% element form method="post" no_visible_fields=True %}
+                {% slot actions %}
+                    {% csrf_token %}
+                    {% element button type="submit" class="btn" %}
+                        {% trans "Continue" %}
+                    {% endelement %}
+                    <button type="button" class="btn secondary" onclick="location.href='/'">Cancel</button>
+                {% endslot %}
             {% endelement %}
-        {% endslot %}
-    {% endelement %}
+
+            <div class="note muted">If nothing happens, click Continue or ensure pop-ups are allowed.</div>
+        </div>
+    </div>
 
     <script>
-      // Auto-submit the provider confirmation form so users are redirected immediately
-      document.addEventListener('DOMContentLoaded', function() {
-        const f = document.querySelector('form');
-        if (f) {
-          // Small delay to allow any JS/CSP to initialize
-          setTimeout(() => { try { f.submit(); } catch(e) {} }, 50);
-        }
-      });
+        // Auto-submit the provider confirmation form so users are redirected immediately
+        document.addEventListener('DOMContentLoaded', function() {
+            const f = document.querySelector('form');
+            if (f) {
+                setTimeout(() => { try { f.submit(); } catch(e) { console.error(e); } }, 120);
+            }
+        });
     </script>
-{% endblock content %}
+</body>
+</html>
