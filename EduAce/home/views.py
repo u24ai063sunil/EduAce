@@ -4,7 +4,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
+from django.views.decorators.http import require_POST
 import requests
+from allauth.socialaccount.models import SocialAccount
 
 from .forms import ContactForm, UserRegistrationForm, LoginForm,StudyPlanForm,ProfileEditForm
 from .models import Profile,StudyPlan
@@ -107,76 +109,35 @@ def signup(request):
             password = form.cleaned_data['password']
             full_name = form.cleaned_data['full_name']
 
-            # 1️⃣ Create user (inactive until email verified)
+            # Create user (active immediately)
             user = User.objects.create_user(
                 username=email,
                 email=email,
                 password=password,
                 first_name=full_name,
-                is_active=False
+                is_active=True
             )
 
-            # 2️⃣ Create / update profile
+            # Create / update profile
             profile, _ = Profile.objects.get_or_create(user=user)
             profile.college = form.cleaned_data['college']
             profile.degree = form.cleaned_data['degree']
             profile.year = form.cleaned_data['year']
             profile.subjects = form.cleaned_data['subjects']
             profile.contact = form.cleaned_data['contact']
-
-            # 3️⃣ Generate OTP
-            otp = str(random.randint(100000, 999999))
-            profile.email_otp = otp
-            profile.is_email_verified = False
             profile.save()
-
-            # 4️⃣ Send OTP email
-            sent = send_otp_email(email, otp)
-
-            if not sent:
-                # If email wasn't sent, clean up created user and inform the user
-                try:
-                    user.delete()
-                except Exception:
-                    pass
-                messages.error(request, "Couldn't send verification email. Please try again later.")
-                return redirect('signup')
-
-            # 5️⃣ Store user id in session for verification
-            request.session['verify_user_id'] = user.id
 
             messages.success(
                 request,
-                "Account created! A 6-digit verification code has been sent to your email."
+                "Account created successfully! Please log in."
             )
 
-            return redirect('verify_email')
+            return redirect('login')
 
     else:
         form = UserRegistrationForm()
 
     return render(request, 'signup.html', {'form': form})
-
-def verify_email(request):
-    user_id = request.session.get('verify_user_id')
-    user = User.objects.get(id=user_id)
-
-    if request.method == 'POST':
-        otp = request.POST.get('otp')
-
-        if otp == user.profile.email_otp:
-            user.is_active = True
-            user.save()
-            user.profile.is_email_verified = True
-            user.profile.email_otp = ""
-            user.profile.save()
-
-            messages.success(request, "Email verified successfully!")
-            return redirect('login')
-        else:
-            messages.error(request, "Invalid verification code")
-
-    return render(request, 'verify_email.html')
 
 def login_view(request):
     if request.method == 'POST':
@@ -187,9 +148,6 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
 
             if user is not None:
-                if not user.profile.is_email_verified:
-                    messages.error(request, "Please verify your email first.")
-                    return redirect('login')
                 login(request, user)
                 return redirect('features')  # Redirect after login
             else:
@@ -200,6 +158,24 @@ def login_view(request):
         form = LoginForm()
         
     return render(request, 'login.html', {'form': form})
+
+
+def oauth_callback(request):
+    """Handle OAuth callback and user profile creation"""
+    user = request.user
+    if user.is_authenticated:
+        # Ensure profile exists
+        if not hasattr(user, 'profile'):
+            Profile.objects.create(user=user)
+        return redirect('features')
+    return redirect('login')
+
+
+def oauth_error(request):
+    """Handle OAuth errors"""
+    error = request.GET.get('error', 'An error occurred during OAuth authentication.')
+    messages.error(request, f"OAuth Error: {error}")
+    return redirect('login')
 
 
 @login_required   #after adding expense tracker

@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+import re
 from .models import ContactMessage, Profile
 
 class ProfileEditForm(forms.ModelForm):
@@ -36,6 +37,12 @@ class UserRegistrationForm(forms.Form):
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
+        
+        # Regex validation for email format
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_regex, email):
+            raise ValidationError("Please enter a valid email address.")
+        
         if User.objects.filter(username=email).exists():
             raise ValidationError("A user with that email already exists.")
         return email
