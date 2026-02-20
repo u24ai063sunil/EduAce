@@ -223,13 +223,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     
+    # User apps (must come before allauth to override templates)
+    'home',
+    
     # OAuth and authentication
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    
-    'home',
 ]
 
 SITE_ID = 1
