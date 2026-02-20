@@ -131,7 +131,16 @@ def signup(request):
             profile.save()
 
             # 4️⃣ Send OTP email
-            send_otp_email(email, otp)
+            sent = send_otp_email(email, otp)
+
+            if not sent:
+                # If email wasn't sent, clean up created user and inform the user
+                try:
+                    user.delete()
+                except Exception:
+                    pass
+                messages.error(request, "Couldn't send verification email. Please try again later.")
+                return redirect('signup')
 
             # 5️⃣ Store user id in session for verification
             request.session['verify_user_id'] = user.id
@@ -368,9 +377,13 @@ def forgot_password(request):
             user.profile.email_otp = otp
             user.profile.save()
 
-            send_otp_email(email, otp, purpose="Password Reset")
-            request.session['reset_user_id'] = user.id
-            return redirect('reset_password')
+            sent = send_otp_email(email, otp, purpose="Password Reset")
+            if sent:
+                request.session['reset_user_id'] = user.id
+                return redirect('reset_password')
+            else:
+                messages.error(request, "Couldn't send password reset email. Please try again later.")
+                return redirect('forgot_password')
 
         messages.error(request, "Email not found")
 
